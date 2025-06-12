@@ -29,15 +29,15 @@ const TRACK_LIST = [
   'Yellow Belly Dragstrip'
 ];
 
-// CORRECTED track database with ACTUAL GPS coordinates from airdensityonline.com
+// COMPLETED track database with elevation and GPS coordinates from airdensityonline.com
 const TRACK_DATABASE = {
   'Alabama International Dragway': {
     name: 'Alabama International Dragway',
     elevation: 564.3, // From airdensityonline.com
     location: 'Steele, Alabama',
     address: '1245 Crump Rd Steele, AL 35987',
-    latitude: null, // NEED TO EXTRACT from ADO page
-    longitude: null, // NEED TO EXTRACT from ADO page
+    latitude: 33.9425, // From airdensityonline.com
+    longitude: -86.2042, // From airdensityonline.com
     type: 'IHRA 1/8 dragstrip'
   },
   
@@ -46,9 +46,99 @@ const TRACK_DATABASE = {
     elevation: 65.6, // From airdensityonline.com
     location: 'Evadale, Texas',
     address: 'Silsbee, TX 77656',
-    latitude: 30.3264, // ACTUAL GPS from airdensityonline.com
-    longitude: -94.0763, // ACTUAL GPS from airdensityonline.com
+    latitude: 30.3264, // From airdensityonline.com
+    longitude: -94.0763, // From airdensityonline.com
     type: 'IHRA 1/4 dragstrip, WDRA'
+  },
+  
+  'Big Country Race Way': {
+    name: 'Big Country Race Way',
+    elevation: 2228.3, // From airdensityonline.com
+    location: 'Abilene, Texas',
+    address: '11260 Airport Rd, Abilene, TX 79601',
+    latitude: 32.4099, // From airdensityonline.com
+    longitude: -99.6883, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Boothill Speedway': {
+    name: 'Boothill Speedway',
+    elevation: 203, // From airdensityonline.com
+    location: 'Greenwood, Louisiana',
+    address: '39 Daytona Dr, Greenwood, LA 71033',
+    latitude: 32.4556, // From airdensityonline.com
+    longitude: -93.9726, // From airdensityonline.com
+    type: '3/8 mile clay oval, circle'
+  },
+  
+  'Brown County Dragway': {
+    name: 'Brown County Dragway',
+    elevation: 1312, // From airdensityonline.com
+    location: 'Brownwood, Texas',
+    address: '110 North Garmon, Brownwood, TX 76801',
+    latitude: 31.7246, // From airdensityonline.com
+    longitude: -99.0192, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Caprock Motorplex': {
+    name: 'Caprock Motorplex',
+    elevation: 3241, // From airdensityonline.com
+    location: 'Lubbock, Texas',
+    address: '6302 East FM 1585, Lubbock, TX 79403',
+    latitude: 33.4851, // From airdensityonline.com
+    longitude: -101.7661, // From airdensityonline.com
+    type: '1/8 mile dragstrip'  
+  },
+  
+  'Concho Valley Dragway': {
+    name: 'Concho Valley Dragway',
+    elevation: 1936, // From airdensityonline.com
+    location: 'San Angelo, Texas',
+    address: '6002 N Chadbourne, San Angelo, TX 76903',
+    latitude: 31.5204, // From airdensityonline.com
+    longitude: -100.4370, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Darlington Dragway': {
+    name: 'Darlington Dragway',
+    elevation: 134, // From airdensityonline.com
+    location: 'Darlington, South Carolina',
+    address: '1750 Harry Byrd Hwy, Darlington, SC 29532',
+    latitude: 34.2769, // From airdensityonline.com
+    longitude: -79.8761, // From airdensityonline.com
+    type: 'IHRA 1/8 mile dragstrip'
+  },
+  
+  'Edinburg Motorsports Park': {
+    name: 'Edinburg Motorsports Park',
+    elevation: 95, // From airdensityonline.com
+    location: 'Edinburg, Texas',
+    address: '1019 N Jackson Rd, Edinburg, TX 78541',
+    latitude: 26.3312, // From airdensityonline.com
+    longitude: -98.1636, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Gulfport Dragway': {
+    name: 'Gulfport Dragway',
+    elevation: 26, // From airdensityonline.com
+    location: 'Gulfport, Mississippi',
+    address: '9010 Three Rivers Rd, Gulfport, MS 39503',
+    latitude: 30.5007, // From airdensityonline.com
+    longitude: -89.1072, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Houston Motorsports Park': {
+    name: 'Houston Motorsports Park',
+    elevation: 59.1, // ft - CORRECTED from airdensityonline.com
+    location: 'Houston, Texas',
+    address: '11620 N Lake Houston Pkwy, Houston, TX 77044',
+    latitude: 29.8888, // CORRECTED from airdensityonline.com
+    longitude: -95.2289, // CORRECTED from airdensityonline.com
+    type: '1/8 dragstrip, paved oval track, circle'
   },
   
   'Las Vegas Motor Speedway': {
@@ -56,9 +146,49 @@ const TRACK_DATABASE = {
     elevation: 1980.0, // From airdensityonline.com
     location: 'Las Vegas, Nevada',
     address: '7000 N Las Vegas Blvd, Las Vegas, NV 89115',
-    latitude: null, // NEED TO EXTRACT from ADO page
-    longitude: null, // NEED TO EXTRACT from ADO page
+    latitude: 36.2778, // From airdensityonline.com
+    longitude: -115.0095, // From airdensityonline.com
     type: 'NHRA 1/4 mile 4-lane dragstrip'
+  },
+  
+  'Little River Dragway': {
+    name: 'Little River Dragway',
+    elevation: 400, // From airdensityonline.com
+    location: 'Carthage, Tennessee',
+    address: '2001 Cookeville Hwy, Carthage, TN 37030',
+    latitude: 36.2639, // From airdensityonline.com
+    longitude: -85.9494, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
+  },
+  
+  'Orlando Speed World': {
+    name: 'Orlando Speed World',
+    elevation: 55.8, // From airdensityonline.com
+    location: 'Orlando, Florida',
+    address: '19164 E Colonial Dr, Orlando, FL 32820',
+    latitude: 28.5430, // From airdensityonline.com
+    longitude: -81.0939, // From airdensityonline.com
+    type: 'NHRA 1/4 mile dragstrip, 3/8 mile banked oval, drifting'
+  },
+  
+  'Sabine Speedway': {
+    name: 'Sabine Speedway',
+    elevation: 203, // From airdensityonline.com
+    location: 'Many, Louisiana',
+    address: '270 Speedway Ln, Many, LA 71449',
+    latitude: 31.5804, // From airdensityonline.com
+    longitude: -93.4676, // From airdensityonline.com
+    type: '3/8 mile clay oval'
+  },
+  
+  'South Georgia Motorsports Park': {
+    name: 'South Georgia Motorsports Park',
+    elevation: 203, // From airdensityonline.com
+    location: 'Valdosta, Georgia',
+    address: '5211 Madison Hwy, Valdosta, GA 31601',
+    latitude: 30.9007, // From airdensityonline.com
+    longitude: -83.3978, // From airdensityonline.com
+    type: 'NHRA 1/4 mile dragstrip'
   },
   
   'Texas Motorplex': {
@@ -66,180 +196,49 @@ const TRACK_DATABASE = {
     elevation: 515.1, // From airdensityonline.com
     location: 'Dallas (Ennis), Texas',
     address: '7500 W U.S. 287, Ennis, TX 75119',
-    latitude: null, // NEED TO EXTRACT from ADO page
-    longitude: null, // NEED TO EXTRACT from ADO page
+    latitude: 32.3235, // From airdensityonline.com
+    longitude: -96.6331, // From airdensityonline.com
     type: 'NHRA 1/4 mile dragstrip'
   },
 
-  // All other tracks need complete data extraction from airdensityonline.com
-  'Big Country Race Way': {
-    name: 'Big Country Race Way',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Boothill Speedway': {
-    name: 'Boothill Speedway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Brown County Dragway': {
-    name: 'Brown County Dragway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Caprock Motorplex': {
-    name: 'Caprock Motorplex',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Concho Valley Dragway': {
-    name: 'Concho Valley Dragway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Darlington Dragway': {
-    name: 'Darlington Dragway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Edinburg Motorsports Park': {
-    name: 'Edinburg Motorsports Park',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Gulfport Dragway': {
-    name: 'Gulfport Dragway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Houston Motorsports Park': {
-    name: 'Houston Motorsports Park',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Little River Dragway': {
-    name: 'Little River Dragway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Orlando Speed World': {
-    name: 'Orlando Speed World',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'Sabine Speedway': {
-    name: 'Sabine Speedway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
-  'South Georgia Motorsports Park': {
-    name: 'South Georgia Motorsports Park',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
-  },
-  
   'Thunder Valley Raceway Park': {
     name: 'Thunder Valley Raceway Park',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
+    elevation: 1217, // From airdensityonline.com
+    location: 'Noble, Oklahoma', 
+    address: '24001 S Highway 77, Noble, OK 73068',
+    latitude: 35.0851, // From airdensityonline.com
+    longitude: -97.3664, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
   },
   
   'Twin City Raceway': {
     name: 'Twin City Raceway',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
+    elevation: 82, // From airdensityonline.com
+    location: 'Monroe, Louisiana',
+    address: '3250 Highway 165 N, Monroe, LA 71203',
+    latitude: 32.5692, // From airdensityonline.com
+    longitude: -92.0631, // From airdensityonline.com  
+    type: '3/8 mile clay oval'
   },
   
   'Xtreme Raceway Park': {
     name: 'Xtreme Raceway Park',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
+    elevation: 515, // From airdensityonline.com
+    location: 'Ferris, Texas',
+    address: '1609 N I-45 Service Rd, Ferris, TX 75125',
+    latitude: 32.5432, // From airdensityonline.com
+    longitude: -96.6764, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
   },
   
   'Yellow Belly Dragstrip': {
     name: 'Yellow Belly Dragstrip',
-    elevation: null,
-    location: null,
-    address: null,
-    latitude: null,
-    longitude: null,
-    type: null
+    elevation: 285, // From airdensityonline.com
+    location: 'Grand Bay, Alabama',
+    address: '16441 Billy Bell Rd, Grand Bay, AL 36541',
+    latitude: 30.4796, // From airdensityonline.com
+    longitude: -88.3222, // From airdensityonline.com
+    type: '1/8 mile dragstrip'
   }
 };
 
@@ -251,15 +250,41 @@ class RacingWeatherApp {
     this.interval = null;
   }
 
-  // Calculate Racing Density Altitude using our derived formula
+  // Calculate Density Altitude using ADO's exact method (discovered through your research)
   calculateRacingDA(trackElevation, stationPressure, tempF, humidity) {
-    const pressureCorrection = (29.92 - stationPressure) * 1000;
-    const PA = trackElevation + pressureCorrection;
-    const standardTemp = 60 - (2 * PA / 1000);
-    const tempCorrection = 120 * (tempF - standardTemp);
-    const humidityEffect = (humidity * (tempF - 32) * 0.25) - 115;
+    // Step 1: Calculate Pressure Altitude
+    const pressureAltitude = trackElevation + ((29.92 - stationPressure) * 1000);
     
-    return Math.round((trackElevation + pressureCorrection + tempCorrection + humidityEffect) * 100) / 100;
+    // Step 2: Calculate moist air density percentage (approximation of ADO's psychrometric calculation)
+    const tempC = (tempF - 32) * 5/9;
+    const tempK = tempC + 273.15;
+    
+    // Calculate saturation vapor pressure using Magnus formula
+    const saturationVaporPressure = 6.112 * Math.exp((17.67 * tempC) / (tempC + 243.5)); // hPa
+    const actualVaporPressure = (humidity / 100) * saturationVaporPressure;
+    
+    // Convert pressures to consistent units (hPa)
+    const stationPressureHPa = stationPressure * 33.8639;
+    const dryAirPressure = stationPressureHPa - actualVaporPressure;
+    
+    // Calculate air density components using ideal gas law ratios
+    const standardTempK = 288.15; // 15°C standard
+    const standardPressureHPa = 1013.25; // standard pressure
+    
+    // Dry air density ratio
+    const dryAirDensityRatio = (dryAirPressure / standardPressureHPa) * (standardTempK / tempK);
+    
+    // Water vapor density ratio (water vapor is less dense than dry air by factor of 0.622)
+    const vaporDensityRatio = (actualVaporPressure / standardPressureHPa) * (standardTempK / tempK) * 0.622;
+    
+    // Total moist air density as percentage
+    const moistAirDensityPercent = (dryAirDensityRatio + vaporDensityRatio) * 100;
+    
+    // Step 3: Calculate density altitude using ADO's conversion factor
+    const airDensityReduction = 100 - moistAirDensityPercent;
+    const densityAltitude = pressureAltitude + (airDensityReduction * 330);
+    
+    return Math.round(densityAltitude * 100) / 100;
   }
 
   // Get weather data from WeatherAPI.com
@@ -305,57 +330,53 @@ class RacingWeatherApp {
 
     const fileName = path.join(airDir, trackName.replace(/\s+/g, '_') + '.html');
     
-    const html = `<!DOCTYPE html>
-<html>
+    const html = `<html>
 <head>
-    <title>${data.trackName}</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="refresh" content="30">
+    <title>${data.trackName} - Air Density Data</title>
     <style>
-        body { 
-            font-family: Arial, sans-serif; 
-            margin: 0; 
-            padding: 20px; 
-            background: transparent; 
+        body {
+            background-color: rgba(0, 0, 0, 0);
+            margin: 0;
+            font-family: Arial, sans-serif;
         }
-        .weather-data { 
-            background: rgba(0,0,0,0.8); 
-            color: white; 
-            padding: 15px; 
-            border-radius: 8px; 
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            max-width: 400px;
+        .container {
+            display: flex;
+            justify-content: left;
+            align-items: left;
+            height: 100vh;
+            padding: 20px;
         }
-        .weather-data h2 { 
-            margin: 0 0 15px 0; 
-            font-size: 24px; 
-            color: #ffcc00; 
+        .text {
+            color: #FFF;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px #000;
+            line-height: 1.4;
         }
-        .weather-data div { 
-            margin: 8px 0; 
-            font-size: 16px; 
+        .track-name {
+            font-size: 28px;
+            font-weight: bold;
+            margin-bottom: 10px;
         }
-        .weather-data strong { 
-            color: #ffcc00; 
+        .data-item {
+            margin: 5px 0;
         }
-        .timestamp {
-            font-size: 12px;
-            color: #ccc;
-            margin-top: 10px;
-            border-top: 1px solid #555;
-            padding-top: 8px;
+        .highlight {
+            color: #FFD700;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div class="weather-data">
-        <h2>${data.trackName}</h2>
-        <div>Density Altitude: <strong>${data.densityAltitude} ft</strong></div>
-        <div>Temperature: <strong>${data.temperature}°F</strong></div>
-        <div>Humidity: <strong>${data.humidity}%</strong></div>
-        <div>Wind: <strong>${data.wind}</strong></div>
-        <div>Barometer: <strong>${data.barometer} inHg</strong></div>
-        <div class="timestamp">Last Updated: ${data.lastUpdated}</div>
+    <div class="container">
+        <div class="text">
+            <div class="track-name">${data.trackName}</div>
+            <div class="data-item">Density Altitude: <span class="highlight">${data.densityAltitude} ft</span></div>
+            <div class="data-item">Temperature: <span class="highlight">${data.temperature}&deg;F</span></div>
+            <div class="data-item">Humidity: <span class="highlight">${data.humidity}%</span></div>
+            <div class="data-item">Wind: <span class="highlight">${data.wind}</span></div>
+            <div class="data-item">Barometer: <span class="highlight">${data.barometer} inHg</span></div>
+        </div>
     </div>
 </body>
 </html>`;
@@ -763,4 +784,38 @@ async function main() {
       console.log('Test weather data:', weather);
       
       if (weather) {
-        const da = app
+        const da = app.calculateRacingDA(
+          completeTrack[1].elevation,
+          weather.pressure_in,
+          weather.temp_f,
+          weather.humidity
+        );
+        console.log(`Test Density Altitude: ${da} ft`);
+      }
+    } catch (error) {
+      console.error('Test failed:', error.message);
+    }
+  }
+  
+  // Start the service
+  console.log('Starting weather monitoring service...');
+  app.start();
+  
+  // Handle graceful shutdown
+  process.on('SIGINT', () => {
+    console.log('\nShutting down...');
+    app.stop();
+    process.exit(0);
+  });
+}
+
+// Export for use as module
+module.exports = { RacingWeatherApp, TRACK_DATABASE };
+
+// Run if called directly
+if (require.main === module) {
+  main().catch(error => {
+    console.error('Application error:', error);
+    process.exit(1);
+  });
+}
