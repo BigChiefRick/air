@@ -5,10 +5,10 @@ const axios = require('axios');
 
 // Apple WeatherKit configuration with your specific credentials
 const WEATHERKIT_CONFIG = {
-  keyId: 'KEYID',               // Your Key ID
-  teamId: 'TEAMID',              // Your Team ID
-  serviceId: 'SERVICEID',      // Your Service ID (bundle identifier)
-  privateKeyPath: '/var/www/html/Key.p8' // Path to your .p8 key file
+  keyId: 'LS5C3XADQ7',               // Your Key ID
+  teamId: '5TJQXVX8LT',              // Your Team ID
+  serviceId: 'racer.netandvet',      // Your Service ID (bundle identifier)
+  privateKeyPath: '/var/www/html/AuthKey_LS5C3XADQ7.p8' // Path to your .p8 key file
 };
 
 // Extracted track list from racer.netandvet.com/index.html
@@ -240,12 +240,12 @@ const TRACK_DATABASE = {
   
   'Yellow Belly Dragstrip': {
     name: 'Yellow Belly Dragstrip',
-    elevation: 285, // From airdensityonline.com
-    location: 'Grand Bay, Alabama',
-    address: '16441 Billy Bell Rd, Grand Bay, AL 36541',
-    latitude: 30.4796, // From airdensityonline.com
-    longitude: -88.3222, // From airdensityonline.com
-    type: '1/8 mile dragstrip'
+    elevation: 439, // From airdensityonline.com - CORRECTED
+    location: 'Grand Prairie, Texas', // CORRECTED from Alabama to Texas
+    address: '4702 East Main St. Grand Prairie, Texas 75050', // CORRECTED address
+    latitude: 32.7450, // CORRECTED GPS coordinates for Grand Prairie, TX
+    longitude: -96.9978, // CORRECTED GPS coordinates for Grand Prairie, TX
+    type: '1/8 mile dragstrip' // CORRECTED type
   }
 };
 
@@ -304,9 +304,10 @@ class RacingWeatherApp {
   }
 
   /**
-   * Get weather data from Apple WeatherKit with improved error handling and ADO-compatible processing
+   * Get weather data from Apple WeatherKit following ADO methodology
+   * References: https://airdensityonline.com/2016/08/measuring-racetrack-atmosphere/
    * @param {Object} track - Track data with latitude/longitude
-   * @returns {Object} - Weather data for the track processed to match ADO methodology
+   * @returns {Object} - Weather data processed to match ADO methodology
    */
   async getWeatherForTrack(track) {
     if (!track.latitude || !track.longitude) {
@@ -349,36 +350,33 @@ class RacingWeatherApp {
       // Process humidity - WeatherKit provides as 0-1, convert to percentage
       const humidity = currentWeather.humidity ? currentWeather.humidity * 100 : 50;
       
-      // Process pressure - This is the critical part for ADO matching
-      // WeatherKit typically provides sea level pressure (corrected barometer)
+      // Process pressure following ADO methodology
+      // ADO: "We obtain the corrected value from a weather feed. We calculate the uncorrected value using this and the elevation."
       let seaLevelPressureHPa = currentWeather.pressure || 1013.25; // Default to standard if missing
       
-      // Convert from hPa to inHg
-      const seaLevelPressureInHg = seaLevelPressureHPa / 33.8639;
+      // Convert from hPa to inHg (corrected barometer)
+      const correctedBarometerInHg = seaLevelPressureHPa / 33.8639;
       
-      // Calculate uncorrected barometer (station pressure) using ADO's method
-      // ADO uses a specific formula based on elevation to get station pressure from sea level pressure
+      // Calculate uncorrected barometer (station pressure) following ADO's method
+      // This is the actual pressure at the track elevation, not corrected to sea level
       const elevationFeet = track.elevation;
       const elevationMeters = elevationFeet * 0.3048;
       
-      // Standard atmosphere equation for pressure at altitude
-      // This matches how ADO calculates uncorrected barometer from corrected
+      // Standard atmosphere equation for pressure reduction with altitude
       const temperatureK = (tempF - 32) * 5/9 + 273.15;
-      const lapseRate = 0.0065; // K/m standard atmosphere lapse rate
-      const standardTempK = 288.15; // Standard temperature at sea level
       const gasConstant = 287.05; // J/(kg·K) for dry air
       const gravity = 9.80665; // m/s²
       
-      // Calculate station pressure using barometric formula
+      // Calculate uncorrected barometer (station pressure)
       const pressureRatio = Math.exp(-gravity * elevationMeters / (gasConstant * temperatureK));
-      const stationPressureInHg = seaLevelPressureInHg * pressureRatio;
+      const uncorrectedBarometerInHg = correctedBarometerInHg * pressureRatio;
       
-      console.log(`${track.name} Pressure Processing:`);
-      console.log(`  - Sea Level Pressure: ${seaLevelPressureInHg.toFixed(2)} inHg`);
-      console.log(`  - Station Pressure (uncorrected): ${stationPressureInHg.toFixed(2)} inHg`);
-      console.log(`  - Elevation: ${elevationFeet} ft`);
+      console.log(`${track.name} Weather Processing (ADO Method):`);
       console.log(`  - Temperature: ${tempF.toFixed(1)}°F`);
       console.log(`  - Humidity: ${humidity.toFixed(1)}%`);
+      console.log(`  - Corrected Barometer: ${correctedBarometerInHg.toFixed(2)} inHg`);
+      console.log(`  - Uncorrected Barometer: ${uncorrectedBarometerInHg.toFixed(2)} inHg`);
+      console.log(`  - Elevation: ${elevationFeet} ft`);
       
       // Process wind data with fallbacks
       let windMph = 0;
@@ -392,7 +390,7 @@ class RacingWeatherApp {
         if (currentWeather.windDirection !== undefined) {
           windDegrees = currentWeather.windDirection;
           
-          // Convert degrees to compass direction (matching ADO format)
+          // Convert degrees to compass direction (ADO format)
           const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 
                               'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
           const index = Math.round(windDegrees / 22.5) % 16;
@@ -424,8 +422,8 @@ class RacingWeatherApp {
       return {
         temp_f: tempF,
         humidity: humidity,
-        pressure_in: stationPressureInHg,  // ADO-compatible uncorrected barometer
-        pressure_corrected_in: seaLevelPressureInHg,  // Sea level pressure for reference
+        pressure_in: uncorrectedBarometerInHg,  // ADO uses uncorrected barometer for calculations
+        pressure_corrected_in: correctedBarometerInHg,  // Corrected barometer for reference
         wind_mph: windMph,
         wind_dir: windDir,
         wind_degrees: windDegrees,
@@ -442,77 +440,86 @@ class RacingWeatherApp {
   }
 
   /**
-   * Calculate Density Altitude using ADO's EXACT methodology
-   * Simplified to match ADO results within ±10 feet
+   * Calculate Density Altitude following ADO methodology
+   * Reference: https://airdensityonline.com/2016/08/measuring-racetrack-atmosphere/
+   * ADO: "We calculate density altitude using the temp, hum, and bar values"
    * 
    * @param {number} trackElevation - Elevation of the track in feet
-   * @param {number} stationPressure - Uncorrected barometric pressure in inHg
+   * @param {number} uncorrectedBarometer - Station pressure in inHg (ADO method)
    * @param {number} tempF - Temperature in Fahrenheit
    * @param {number} humidity - Relative humidity percentage (0-100)
-   * @returns {Object} - Complete calculation results matching ADO exactly
+   * @returns {Object} - Complete calculation results following ADO methodology
    */
-  calculateRacingDA(trackElevation, stationPressure, tempF, humidity) {
-    console.log(`\n=== DENSITY ALTITUDE CALCULATION (ADO SIMPLIFIED METHOD) ===`);
-    console.log(`Using proven ADO conversion patterns`);
+  calculateAdoDA(trackElevation, uncorrectedBarometer, tempF, humidity) {
+    console.log(`\n=== DENSITY ALTITUDE CALCULATION (ADO METHODOLOGY) ===`);
+    console.log(`Reference: airdensityonline.com/2016/08/measuring-racetrack-atmosphere/`);
+    console.log(`ADO Method: Calculate using temp, humidity, and uncorrected barometer`);
     console.log(`Track: ${trackElevation} ft elevation`);
-    console.log(`Input: ${tempF.toFixed(3)}°F, ${humidity.toFixed(1)}%, ${stationPressure.toFixed(2)} inHg`);
+    console.log(`Input: ${tempF.toFixed(1)}°F, ${humidity.toFixed(1)}%, ${uncorrectedBarometer.toFixed(2)} inHg (uncorrected)`);
     
-    // STEP 1: Calculate Pressure Altitude (standard method)
-    const pressureAltitude = trackElevation + ((29.92 - stationPressure) * 1000);
+    // STEP 1: Calculate Pressure Altitude using uncorrected barometer
+    // Standard sea level pressure: 29.92 inHg
+    const pressureAltitude = trackElevation + ((29.92 - uncorrectedBarometer) * 1000);
     console.log(`Pressure Altitude: ${pressureAltitude.toFixed(2)} ft`);
     
-    // STEP 2: Temperature effect using aviation standard
+    // STEP 2: Calculate temperature effect
+    // Use ISA standard: 59°F (15°C) at sea level, -2°C per 1000 ft
     const tempC = (tempF - 32) * 5/9;
-    const adoStandardTempC = 15.144; // 59.26°F - confirmed from reverse engineering
-    const tempDifferenceC = tempC - adoStandardTempC;
+    const standardTempC = 15.0; // ISA standard at sea level
+    const tempDifferenceC = tempC - standardTempC;
     
-    // Aviation formula: 120 ft per degree C above standard
-    const aviationTemperatureEffect = 120 * tempDifferenceC;
-    const aviationDensityAltitude = pressureAltitude + aviationTemperatureEffect;
+    // Standard aviation formula: ~120 ft per degree C
+    const temperatureEffect = 120 * tempDifferenceC;
+    const temperatureAdjustedDA = pressureAltitude + temperatureEffect;
     
-    console.log(`Temperature: ${tempF.toFixed(3)}°F (${tempC.toFixed(3)}°C)`);
-    console.log(`ADO Standard: 59.26°F (${adoStandardTempC}°C)`);
-    console.log(`Temperature Difference: ${tempDifferenceC.toFixed(3)}°C`);
-    console.log(`Aviation Temperature Effect: ${aviationTemperatureEffect.toFixed(1)} ft`);
-    console.log(`Aviation DA: ${aviationDensityAltitude.toFixed(2)} ft`);
+    console.log(`Temperature: ${tempF.toFixed(1)}°F (${tempC.toFixed(1)}°C)`);
+    console.log(`ISA Standard: 59°F (15°C)`);
+    console.log(`Temperature Difference: ${tempDifferenceC.toFixed(1)}°C`);
+    console.log(`Temperature Effect: ${temperatureEffect.toFixed(1)} ft`);
+    console.log(`Temperature-Adjusted DA: ${temperatureAdjustedDA.toFixed(1)} ft`);
     
-    // STEP 3: Humidity effect using calibrated calculation
-    // Based on analysis of historical data from Alabama, Ben Bruce, and Houston tracks
-    // Optimal: 5.5 ft per 1% relative humidity + 300 ft base offset (RMS error: 97.5 ft)
-    const humidityEffect = humidity * 5.5; // ft per % humidity
-    const baseOffset = 300; // ft - systematic offset to match ADO baseline
+    // STEP 3: Calculate humidity effects following ADO principles
+    // ADO: "Air density decreases as humidity rises"
+    // ADO: "The density of air decreases as the temperature or humidity rises"
     
-    // STEP 4: Final density altitude
-    const densityAltitude = aviationDensityAltitude + humidityEffect + baseOffset;
+    // Calculate dew point (ADO method)
+    const dewPointC = 243.5 * Math.log(humidity/100 * Math.exp((17.67 * tempC)/(tempC + 243.5))) / 
+                      (17.67 - Math.log(humidity/100 * Math.exp((17.67 * tempC)/(tempC + 243.5))));
+    const dewPointF = (dewPointC * 9/5) + 32;
     
-    console.log(`Humidity: ${humidity.toFixed(1)}%`);
-    console.log(`Humidity Effect: ${humidityEffect.toFixed(1)} ft (${humidity.toFixed(1)}% × 5.5 ft/%)`);
-    console.log(`Base Offset: ${baseOffset} ft`);
-    console.log(`Final ADO DA: ${densityAltitude.toFixed(2)} ft`);
-    console.log(`===============================================\n`);
-    
-    // Calculate additional values for display (estimated)
-    const tempK = tempC + 273.15;
+    // Calculate vapor pressure (ADO method)
     const saturationPressureHPa = 6.112 * Math.exp((17.67 * tempC) / (tempC + 243.5));
     const saturationPressureInHg = saturationPressureHPa / 33.8639;
     const vaporPressureInHg = (humidity / 100) * saturationPressureInHg;
+    
+    // Calculate grains of water (ADO method)
     const vaporPressureHPa = vaporPressureInHg * 33.8639;
-    
-    const dewPointC = 243.5 * Math.log(vaporPressureHPa / 6.112) / (17.67 - Math.log(vaporPressureHPa / 6.112));
-    const dewPointF = (dewPointC * 9/5) + 32;
-    
-    const stationPressureHPa = stationPressure * 33.8639;
-    const dryAirPressureHPa = stationPressureHPa - vaporPressureHPa;
+    const uncorrectedBarometerHPa = uncorrectedBarometer * 33.8639;
+    const dryAirPressureHPa = uncorrectedBarometerHPa - vaporPressureHPa;
     const grainsOfWater = 7000 * (vaporPressureHPa / dryAirPressureHPa) / 0.622;
     
-    // Estimate air densities (these are approximations for display)
-    const dryAirDensityPercent = 100 - ((tempF - 59.26) * 0.35) - ((29.92 - stationPressure) * 3.4);
+    // Humidity correction based on ADO's air density principles
+    // Higher humidity = lower air density = higher density altitude
+    const humidityEffect = humidity * 5.5; // Empirically derived from ADO comparisons
+    
+    // STEP 4: Final density altitude
+    const densityAltitude = temperatureAdjustedDA + humidityEffect;
+    
+    console.log(`Humidity: ${humidity.toFixed(1)}%`);
+    console.log(`Dew Point: ${dewPointF.toFixed(1)}°F`);
+    console.log(`Vapor Pressure: ${vaporPressureInHg.toFixed(3)} inHg`);
+    console.log(`Grains of Water: ${grainsOfWater.toFixed(1)}`);
+    console.log(`Humidity Effect: ${humidityEffect.toFixed(1)} ft`);
+    console.log(`Final Density Altitude: ${densityAltitude.toFixed(1)} ft`);
+    console.log(`===============================================\n`);
+    
+    // Calculate air density percentages (ADO style)
+    const dryAirDensityPercent = 100 - ((tempF - 59.0) * 0.35) - ((29.92 - uncorrectedBarometer) * 3.4);
     const totalAirDensityPercent = dryAirDensityPercent - (humidity * 0.03);
     
     // Return complete calculation results
     return {
       densityAltitude: Math.round(densityAltitude * 100) / 100,
-      aviationDensityAltitude: Math.round(aviationDensityAltitude * 100) / 100,
       pressureAltitude: Math.round(pressureAltitude * 100) / 100,
       dewPoint: Math.round(dewPointF * 100) / 100,
       saturationPressure: Math.round(saturationPressureInHg * 1000) / 1000,
@@ -521,16 +528,16 @@ class RacingWeatherApp {
       dryAirDensityPercent: Math.round(dryAirDensityPercent * 100) / 100,
       totalAirDensityPercent: Math.round(totalAirDensityPercent * 100) / 100,
       humidityAirDensityLoss: Math.round((dryAirDensityPercent - totalAirDensityPercent) * 100) / 100,
-      aviationTemperatureEffect: Math.round(aviationTemperatureEffect * 10) / 10,
-      humidityCorrection: Math.round(humidityEffect * 10) / 10,
-      tempDifferenceC: Math.round(tempDifferenceC * 1000) / 1000,
-      tempDifferenceF: Math.round((tempF - 59.26) * 100) / 100,
-      adoStandard: `59.26°F, 29.92 inHg, 0% humidity`,
-      humidityConversionFactor: 4.5
+      temperatureEffect: Math.round(temperatureEffect * 10) / 10,
+      humidityEffect: Math.round(humidityEffect * 10) / 10,
+      tempDifferenceC: Math.round(tempDifferenceC * 100) / 100,
+      tempDifferenceF: Math.round((tempF - 59.0) * 100) / 100,
+      adoStandard: `59°F, 29.92 inHg, 0% humidity`,
+      methodology: 'ADO: temp, humidity, uncorrected barometer'
     };
   }
 
-  // Generate HTML overlay file for each track with enhanced data
+  // Generate HTML overlay file for each track (unchanged styling per request)
   generateTrackHTML(trackName) {
     const data = this.weatherCache[trackName];
     if (!data) return;
@@ -614,14 +621,14 @@ class RacingWeatherApp {
             
             <div class="detailed">
                 <div>Dew Point: <span class="secondary">${data.dewPoint}&deg;F</span></div>
-                <div>Humidity Effect: <span class="secondary">${data.humidityCorrection} ft</span></div>
+                <div>Grains H2O: <span class="secondary">${data.grainsOfWater}</span></div>
                 <div>Air Density: <span class="secondary">${data.airDensity}%</span></div>
             </div>
             
             <div class="info">Updated: ${data.lastUpdated}</div>
             <div class="info">Elevation: ${data.elevation} ft | PA: ${data.pressureAltitude} ft</div>
         </div>
-        <div class="source">Apple WeatherKit | ADO Formula</div>
+        <div class="source">Apple WeatherKit | ADO Method</div>
     </div>
 </body>
 </html>`;
@@ -647,7 +654,9 @@ class RacingWeatherApp {
       const dataWithMetadata = {
         metadata: {
           source: 'Apple WeatherKit',
-          formula: 'AirDensityOnline.com Exact Method',
+          formula: 'AirDensityOnline Methodology',
+          reference: 'airdensityonline.com/2016/08/measuring-racetrack-atmosphere/',
+          method: 'Temperature, humidity, and uncorrected barometer',
           lastUpdate: new Date().toISOString(),
           trackCount: Object.keys(this.weatherCache).length
         },
@@ -662,7 +671,7 @@ class RacingWeatherApp {
     }
   }
 
-  // Generate index page for the air section with enhanced features
+  // Generate index page with refined red & black theme (reduced glow)
   generateIndexPage() {
     const airDir = path.join(process.cwd(), 'air');
     if (!fs.existsSync(airDir)) {
@@ -699,111 +708,182 @@ class RacingWeatherApp {
     const html = `<!DOCTYPE html>
 <html>
 <head>
-    <title>Racing Weather Monitor - ADO Exact Method</title>
+    <title>Racing Weather Monitor - ADO Methodology</title>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
         body { 
-            font-family: Arial, sans-serif; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
             padding: 20px; 
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            background: linear-gradient(135deg, #1a0000 0%, #330000 25%, #000000 50%, #1a0000 75%, #330000 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            color: #ffffff;
             min-height: 100vh;
         }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
         }
+        
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
+            margin-bottom: 40px;
+            padding: 30px;
+            background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(0,0,0,0.8));
+            border-radius: 20px;
+            border: 2px solid #cc0000;
+            box-shadow: 0 8px 25px rgba(255,0,0,0.2);
+            backdrop-filter: blur(10px);
         }
+        
         .header h1 {
-            font-size: 2.5em;
+            font-size: 3.2em;
             margin: 0;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+            background: linear-gradient(45deg, #ff0000, #ffffff, #ff0000);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
         }
+        
         .subtitle {
-            font-size: 1.1em;
-            color: #ffcc00;
-            margin-top: 10px;
+            font-size: 1.2em;
+            color: #ff3333;
+            margin-top: 15px;
+            font-weight: 600;
         }
+        
         .last-updated {
-            font-size: 14px;
-            color: #ffcc00;
-            margin-top: 10px;
+            font-size: 16px;
+            color: #ff9999;
+            margin-top: 15px;
+            font-weight: 500;
         }
+        
         .tracks-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 25px;
+            padding: 0 10px;
         }
+        
         .track-item {
-            background: rgba(0,0,0,0.4);
-            padding: 20px;
-            border-radius: 8px;
-            border-left: 4px solid #ffcc00;
+            background: linear-gradient(145deg, rgba(255,0,0,0.1), rgba(0,0,0,0.85));
+            padding: 25px;
+            border-radius: 15px;
+            border-left: 4px solid #cc0000;
+            border-right: 1px solid rgba(255,0,0,0.2);
+            border-top: 1px solid rgba(255,0,0,0.15);
+            border-bottom: 1px solid rgba(255,0,0,0.3);
+            box-shadow: 0 6px 20px rgba(255,0,0,0.15);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
         }
+        
+        .track-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255,0,0,0.25);
+            border-left: 4px solid #ff0000;
+        }
+        
         .track-item h3 {
-            margin: 0 0 10px 0;
-            font-size: 1.2em;
-            color: #ffcc00;
+            margin: 0 0 15px 0;
+            font-size: 1.3em;
+            color: #ff2222;
+            font-weight: 700;
         }
+        
         .track-data {
-            margin-bottom: 15px;
-            font-size: 0.9em;
+            margin-bottom: 20px;
+            font-size: 0.95em;
             display: flex;
-            gap: 15px;
+            gap: 20px;
             flex-wrap: wrap;
+            font-weight: 500;
         }
+        
         .da-value {
-            color: #FFD700;
+            color: #ff4444;
             font-weight: bold;
         }
+        
         .temp-value {
-            color: #FF6B6B;
+            color: #ff8888;
             font-weight: bold;
         }
+        
         .humidity-value {
-            color: #4ECDC4;
+            color: #ffaaaa;
             font-weight: bold;
         }
+        
         .no-data {
-            color: #999;
+            color: #666666;
             font-style: italic;
         }
+        
         .track-links {
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
+        
         .btn {
-            padding: 8px 16px;
+            padding: 10px 18px;
             text-decoration: none;
-            border-radius: 4px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: bold;
             transition: all 0.3s ease;
+            border: 1px solid transparent;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
         .overlay-btn {
-            background: #28a745;
+            background: linear-gradient(135deg, #cc0000, #990000);
             color: white;
+            border: 1px solid #ff2222;
+            box-shadow: 0 3px 12px rgba(255,0,0,0.2);
         }
+        
         .overlay-btn:hover {
-            background: #218838;
+            background: linear-gradient(135deg, #ff0000, #cc0000);
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(255,0,0,0.35);
         }
+        
         .json-btn {
-            background: #17a2b8;
-            color: white;
+            background: linear-gradient(135deg, #333333, #111111);
+            color: #ff3333;
             cursor: pointer;
-            border: none;
+            border: 1px solid #cc0000;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.3);
         }
+        
         .json-btn:hover {
-            background: #138496;
+            background: linear-gradient(135deg, #444444, #222222);
+            color: #ff4444;
+            transform: translateY(-1px);
+            box-shadow: 0 5px 18px rgba(255,0,0,0.2);
         }
+        
         .modal {
             display: none;
             position: fixed;
@@ -812,60 +892,100 @@ class RacingWeatherApp {
             top: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0,0,0,0.8);
+            background-color: rgba(0,0,0,0.9);
+            backdrop-filter: blur(3px);
         }
+        
         .modal-content {
-            background: #2c3e50;
-            margin: 5% auto;
-            padding: 20px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 800px;
-            max-height: 80vh;
+            background: linear-gradient(145deg, #1a0000, #000000);
+            margin: 3% auto;
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid #cc0000;
+            width: 85%;
+            max-width: 900px;
+            max-height: 85vh;
             overflow-y: auto;
+            box-shadow: 0 15px 50px rgba(255,0,0,0.3);
         }
+        
         .close {
-            color: #aaa;
+            color: #ff3333;
             float: right;
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             cursor: pointer;
+            transition: color 0.3s ease;
         }
+        
         .close:hover {
-            color: white;
+            color: #ff0000;
         }
+        
         pre {
-            background: #1e1e1e;
-            padding: 15px;
-            border-radius: 4px;
+            background: linear-gradient(145deg, #0a0a0a, #1a1a1a);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #cc0000;
             overflow-x: auto;
             font-size: 12px;
-            color: #f8f8f2;
+            color: #ffffff;
+            line-height: 1.4;
         }
+        
         .footer {
             text-align: center;
-            margin-top: 40px;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 10px;
+            margin-top: 50px;
+            padding: 30px;
+            background: linear-gradient(145deg, rgba(255,0,0,0.08), rgba(0,0,0,0.8));
+            border-radius: 15px;
+            border: 1px solid rgba(255,0,0,0.2);
             font-size: 14px;
+            backdrop-filter: blur(5px);
         }
+        
         .info-badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 12px;
-            margin-right: 5px;
-            background: rgba(255,255,255,0.2);
+            margin: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        
         .apple-badge {
-            background: rgba(0, 122, 255, 0.3);
+            background: linear-gradient(135deg, #cc0000, #990000);
+            color: white;
+            border: 1px solid #ff2222;
         }
+        
         .ado-badge {
-            background: rgba(255, 193, 7, 0.3);
+            background: linear-gradient(135deg, #333333, #111111);
+            color: #ff3333;
+            border: 1px solid #cc0000;
         }
-        .racing-badge {
-            background: rgba(220, 53, 69, 0.3);
+        
+        .reference-badge {
+            background: linear-gradient(135deg, #ff2222, #cc0000);
+            color: white;
+            border: 1px solid #ff4444;
+        }
+        
+        @media (max-width: 768px) {
+            .tracks-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2.5em;
+            }
+            
+            .track-item {
+                padding: 20px;
+            }
         }
     </style>
 </head>
@@ -873,12 +993,12 @@ class RacingWeatherApp {
     <div class="container">
         <div class="header">
             <h1>🏁 Racing Weather Monitor</h1>
-            <div class="subtitle">AirDensityOnline.com Exact Formula</div>
+            <div class="subtitle">AirDensityOnline Methodology</div>
             <div class="last-updated">Last updated: ${lastUpdated}</div>
-            <div style="margin-top: 15px;">
+            <div style="margin-top: 20px;">
                 <span class="info-badge apple-badge">Apple WeatherKit</span>
-                <span class="info-badge ado-badge">ADO Exact Method</span>
-                <span class="info-badge racing-badge">59.26°F Standard</span>
+                <span class="info-badge ado-badge">ADO Method</span>
+                <span class="info-badge reference-badge">Temp + Humidity + Barometer</span>
             </div>
         </div>
 
@@ -887,9 +1007,9 @@ ${trackLinks}
         </div>
 
         <div class="footer">
-            <p><strong>Weather Data:</strong> Apple WeatherKit | <strong>Formula:</strong> AirDensityOnline.com Exact Method</p>
-            <p>Updates every 5 minutes | Aviation formula (120 ft/°C) + humidity correction (315 ft/%)</p>
-            <p><small>Reverse-engineered from actual ADO data to match within ±5 feet</small></p>
+            <p><strong>Weather Data:</strong> Apple WeatherKit | <strong>Method:</strong> AirDensityOnline Methodology</p>
+            <p>Updates every 5 minutes | Following ADO principles: temp, humidity, uncorrected barometer</p>
+            <p><small>Reference: <a href="https://airdensityonline.com/2016/08/measuring-racetrack-atmosphere/" style="color: #ff4444;">airdensityonline.com/2016/08/measuring-racetrack-atmosphere/</a></small></p>
         </div>
     </div>
 
@@ -897,7 +1017,7 @@ ${trackLinks}
     <div id="jsonModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Track JSON Data</h2>
+            <h2 id="modalTitle" style="color: #ff3333; margin-bottom: 20px;">Track JSON Data</h2>
             <pre id="jsonContent"></pre>
         </div>
     </div>
@@ -965,6 +1085,7 @@ ${trackLinks}
   async updateAllTracks() {
     const trackNames = Object.keys(this.tracks);
     console.log(`\n🔄 Updating weather for ${trackNames.length} tracks using Apple WeatherKit...`);
+    console.log(`📊 Following AirDensityOnline methodology`);
     console.log(`⏰ ${new Date().toLocaleString()}\n`);
     
     let successCount = 0;
@@ -985,7 +1106,7 @@ ${trackLinks}
         
         const weather = await this.getWeatherForTrack(trackData);
         if (weather) {
-          const calculationResults = this.calculateRacingDA(
+          const calculationResults = this.calculateAdoDA(
             trackData.elevation,
             weather.pressure_in,
             weather.temp_f,
@@ -1004,7 +1125,7 @@ ${trackLinks}
             wind: weather.wind_mph > 0 ? `${weather.wind_mph.toFixed(1)} mph ${weather.wind_dir}` : 'CALM',
             barometer: weather.pressure_in,
             
-            // Additional ADO-exact values
+            // Additional ADO values
             pressureAltitude: calculationResults.pressureAltitude,
             dewPoint: calculationResults.dewPoint,
             saturationPressure: calculationResults.saturationPressure,
@@ -1013,19 +1134,18 @@ ${trackLinks}
             airDensityDry: calculationResults.dryAirDensityPercent,
             airDensity: calculationResults.totalAirDensityPercent,
             humidityAirDensityLoss: calculationResults.humidityAirDensityLoss,
-            aviationTemperatureEffect: calculationResults.aviationTemperatureEffect,
-            humidityCorrection: calculationResults.humidityCorrection,
+            temperatureEffect: calculationResults.temperatureEffect,
+            humidityEffect: calculationResults.humidityEffect,
             tempDifferenceC: calculationResults.tempDifferenceC,
             tempDifferenceF: calculationResults.tempDifferenceF,
-            aviationDensityAltitude: calculationResults.aviationDensityAltitude,
-            humidityConversionFactor: calculationResults.humidityConversionFactor,
             
             // Metadata
             correctedBarometer: weather.pressure_corrected_in,
             windDegrees: weather.wind_degrees,
             weatherSource: 'Apple WeatherKit',
-            formulaSource: 'AirDensityOnline.com Exact Method',
-            motorsportsStandard: calculationResults.adoStandard,
+            formulaSource: 'AirDensityOnline Methodology',
+            methodology: calculationResults.methodology,
+            adoStandard: calculationResults.adoStandard,
             lastUpdated: new Date().toLocaleString(),
             timestamp: Date.now()
           };
@@ -1074,7 +1194,8 @@ ${trackLinks}
     
     this.isRunning = true;
     console.log('🚀 Starting Racing Weather Service with Apple WeatherKit...');
-    console.log('🎯 Using AirDensityOnline.com Exact Method (59.26°F + humidity correction)');
+    console.log('📊 Using AirDensityOnline Methodology');
+    console.log('🔗 Reference: airdensityonline.com/2016/08/measuring-racetrack-atmosphere/');
     console.log('⏱️  Update interval: 5 minutes\n');
     
     // Initial update
@@ -1143,10 +1264,10 @@ ${trackLinks}
         console.log('🌤️  Weather Data Retrieved:');
         console.log(`   Temperature: ${weather.temp_f.toFixed(1)}°F`);
         console.log(`   Humidity: ${weather.humidity.toFixed(1)}%`);
-        console.log(`   Station Pressure: ${weather.pressure_in.toFixed(2)} inHg`);
+        console.log(`   Uncorrected Barometer: ${weather.pressure_in.toFixed(2)} inHg`);
         console.log(`   Wind: ${weather.wind_mph.toFixed(1)} mph ${weather.wind_dir}\n`);
         
-        const results = this.calculateRacingDA(
+        const results = this.calculateAdoDA(
           track.elevation,
           weather.pressure_in,
           weather.temp_f,
@@ -1157,6 +1278,7 @@ ${trackLinks}
         console.log(`   Density Altitude: ${results.densityAltitude} ft`);
         console.log(`   Pressure Altitude: ${results.pressureAltitude} ft`);
         console.log(`   Dew Point: ${results.dewPoint}°F`);
+        console.log(`   Grains of Water: ${results.grainsOfWater}`);
         console.log(`   Air Density: ${results.totalAirDensityPercent}%`);
       } else {
         console.error('❌ Failed to retrieve weather data');
@@ -1173,7 +1295,8 @@ ${trackLinks}
 async function main() {
   console.log('🏁 RACING WEATHER APPLICATION');
   console.log('🍎 Apple WeatherKit Integration');
-  console.log('📊 AirDensityOnline.com Exact Formula');
+  console.log('📊 AirDensityOnline Methodology');
+  console.log('🔗 Reference: airdensityonline.com/2016/08/measuring-racetrack-atmosphere/');
   console.log('=' .repeat(50) + '\n');
   
   const app = new RacingWeatherApp();
