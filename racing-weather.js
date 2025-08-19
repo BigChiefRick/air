@@ -5,10 +5,10 @@ const axios = require('axios');
 
 // Apple WeatherKit configuration with your specific credentials
 const WEATHERKIT_CONFIG = {
-  keyId: 'LS5C3XADQ7',               // Your Key ID
-  teamId: '5TJQXVX8LT',              // Your Team ID
-  serviceId: 'racer.netandvet',      // Your Service ID (bundle identifier)
-  privateKeyPath: '/var/www/html/AuthKey_LS5C3XADQ7.p8' // Path to your .p8 key file
+  keyId: 'KEYID',               // Your Key ID
+  teamId: 'TEAMID',              // Your Team ID
+  serviceId: 'SERVICEID',      // Your Service ID (bundle identifier)
+  privateKeyPath: '/var/www/html/Key.p8' // Path to your .p8 key file
 };
 
 // Extracted track list from racer.netandvet.com/index.html
